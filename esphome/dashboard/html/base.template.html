@@ -6,16 +6,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}{% end %} - ESPHome</title>
 
-  <link rel="shortcut icon" href="{{ relative_url }}{{ get_static_file_url('images/favicon.ico') }}" />
+  <link rel="shortcut icon" href="{{ base_path }}{{ get_static_file_url('images/favicon.ico') }}" />
 
-  <link rel="stylesheet"
-    href="{{ relative_url }}{{ get_static_file_url('fonts/material-icons/material-icons.css') }}" />
+  <link rel="stylesheet" href="{{ base_path }}{{ get_static_file_url('fonts/material-icons/material-icons.css') }}" />
   <link rel="preload"
-    href="{{ relative_url }}{{ get_static_file_url('fonts/material-icons/MaterialIcons-Regular.woff2') }}" as="font"
+    href="{{ base_path }}{{ get_static_file_url('fonts/material-icons/MaterialIcons-Regular.woff2') }}" as="font"
     crossorigin="anonymous" />
-  <link rel="stylesheet" href="{{ relative_url }}{{ get_static_file_url('css/esphome-2.css') }}" />
-  <meta name="esphome-urls" content="{{ relative_url }} {{ base_path }}"
-</head>
+  <link rel="stylesheet" href="{{ base_path }}{{ get_static_file_url('css/esphome-2.css') }}" />
+  <meta name="esphome-urls" content="{{ relative_url }} {{ base_path }}" </head>
 
 <body>
   {% block main %}{% end %}

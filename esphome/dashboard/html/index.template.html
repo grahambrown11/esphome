@@ -5,12 +5,12 @@
 {% end %}
 
 {% block main %}
-<esphome-main basePath="{{ relative_url }}" logo="{{ relative_url }}{{ get_static_file_url('images/logo-text.svg') }}"
-  version="{{ version }}" docsLink="{{ docs_link }}" {% if login_enabled %}logoutUrl="{{ relative_url }}logout" {% end
+<esphome-main basePath="{{ base_path }}" logo="{{ base_path }}{{ get_static_file_url('images/logo-text.svg') }}"
+  version="{{ version }}" docsLink="{{ docs_link }}" {% if login_enabled %}logoutUrl="{{ base_path }}logout" {% end
   %}></esphome-main>
 {% end %}
 
 {% block footer %}
-<script src="{{ relative_url }}{{ get_static_file_url('js/esphome/index-299aa7a6.js') }}" type="module"></script>
+<script src="{{ base_path }}{{ get_static_file_url('js/esphome/index-299aa7a6.js') }}" type="module"></script>
 {% end %}
 <!-- prettier-ignore -->

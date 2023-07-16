@@ -1189,10 +1189,9 @@ def get_base_frontend_path():
     # static_path = os.environ[ENV_DEV]
     # if not static_path.endswith("/"):
     #     static_path += "/"
-    static_path = "html/"
 
     # This path can be relative, so resolve against the root or else templates don't work
-    return os.path.abspath(os.path.join(os.getcwd(), static_path, "esphome_dashboard"))
+    return os.path.abspath(os.path.join(os.getcwd(), "dashboard/html"))
 
 
 def get_static_path(*args):

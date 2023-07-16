@@ -6,7 +6,7 @@
 
 {% block main %}
 <esphome-main basePath="{{ base_path }}" logo="{{ base_path }}{{ get_static_file_url('images/logo-text.svg') }}"
-  version="{{ version }}" docsLink="{{ docs_link }}" {% if login_enabled %}logoutUrl="{{ base_url }}logout" {% end
+  version="{{ version }}" docsLink="{{ docs_link }}" {% if login_enabled %}logoutUrl="{{ base_path }}logout" {% end
   %}></esphome-main>
 {% end %}
 

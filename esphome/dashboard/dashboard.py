@@ -72,7 +72,7 @@ class DashboardSettings:
 
     @property
     def relative_url(self):
-        return os.getenv("ESPHOME_DASHBOARD_RELATIVE_URL", "/")
+        return os.getenv("ESPHOME_DASHBOARD_RELATIVE_URL", "")
 
     @property
     def status_use_ping(self):
@@ -116,7 +116,7 @@ settings = DashboardSettings()
 cookie_authenticated_yes = b"yes"
 
 
-def template_args():
+def template_args(request_handler):
     version = const.__version__
     if "b" in version:
         docs_link = "https://beta.esphome.io/"
@@ -132,6 +132,7 @@ def template_args():
         "relative_url": settings.relative_url,
         "streamer_mode": get_bool_env("ESPHOME_STREAMER_MODE"),
         "config_dir": settings.config_dir,
+        "base_path": get_ingress_path(request_handler),
     }
 
 
@@ -631,7 +632,7 @@ class DashboardEntry:
     @property
     def update_available(self):
         if self.storage is None:
-            return True
+            return None
         return self.update_old != self.update_new
 
     @property
@@ -693,6 +694,35 @@ class ListDevicesHandler(BaseHandler):
         )
 
 
+class DeviceHandler(BaseHandler):
+    @authenticated
+    def get(self, device_name: str):
+        entries = _list_dashboard_entries()
+        self.set_header("content-type", "application/json")
+        entry = next(filter(lambda entry: entry.name == device_name, entries), None)
+        if entry is None:
+            self.send_error(404)
+        else:
+            self.write(
+                json.dumps(
+                    {
+                        "name": entry.name,
+                        "friendly_name": entry.friendly_name,
+                        "configuration": entry.filename,
+                        "loaded_integrations": entry.loaded_integrations,
+                        "deployed_version": entry.update_old,
+                        "current_version": entry.update_new,
+                        "update_available": entry.update_available,
+                        "path": entry.path,
+                        "comment": entry.comment,
+                        "address": entry.address,
+                        "web_port": entry.web_port,
+                        "target_platform": entry.target_platform,
+                    }
+                )
+            )
+
+
 class MainRequestHandler(BaseHandler):
     @authenticated
     def get(self):
@@ -701,7 +731,7 @@ class MainRequestHandler(BaseHandler):
         self.render(
             "index.template.html",
             begin=begin,
-            **template_args(),
+            **template_args(self),
             login_enabled=settings.using_password,
         )
 
@@ -949,6 +979,37 @@ class EditRequestHandler(BaseHandler):
     def post(self, configuration=None):
         with open(file=settings.rel_path(configuration), mode="wb") as f:
             f.write(self.request.body)
+
+        storage_path = ext_storage_path(settings.config_dir, configuration)
+        storage_json = StorageJSON.load(storage_path)
+        if storage_json is not None:
+            args = [
+                "esphome",
+                "--dashboard",
+                "config",
+                settings.rel_path(configuration),
+            ]
+            rc, stdout, _ = run_system_command(*args)
+            if rc == 0:
+                data = yaml.load(stdout, Loader=SafeLoaderIgnoreUnknown)
+                if "esphome" in data:
+                    update = False
+                    if storage_json.name != data["esphome"].get("name"):
+                        update = True
+                        storage_json.name = data["esphome"].get("name")
+                    if storage_json.friendly_name != data["esphome"].get(
+                        "friendly_name"
+                    ):
+                        update = True
+                        storage_json.friendly_name = data["esphome"].get(
+                            "friendly_name"
+                        )
+                    if storage_json.comment != data["esphome"].get("comment"):
+                        update = True
+                        storage_json.comment = data["esphome"].get("comment")
+                    if update:
+                        storage_json.save(storage_path)
+
         self.set_status(200)
 
 
@@ -1004,7 +1065,7 @@ class LoginHandler(BaseHandler):
             error=error,
             ha_addon=settings.using_ha_addon_auth,
             has_username=bool(settings.username),
-            **template_args(),
+            **template_args(self),
         )
 
     def post_ha_addon_login(self):
@@ -1139,7 +1200,7 @@ def get_static_path(*args):
 
 @functools.cache
 def get_static_file_url(name):
-    base = f"./static/{name}"
+    base = f"/static/{name}"
 
     if ENV_DEV in os.environ:
         return base
@@ -1154,6 +1215,13 @@ def get_static_file_url(name):
     with open(path, "rb") as f_handle:
         hash_ = hashlib.md5(f_handle.read()).hexdigest()[:8]
     return f"{base}?hash={hash_}"
+
+
+def get_ingress_path(request_handler):
+    header = request_handler.request.headers.get("X-Ingress-Path", "")
+    if len(str(header)) > 0:
+        return str(header)
+    return ""
 
 
 def make_app(debug=get_bool_env(ENV_DEV)):
@@ -1196,6 +1264,8 @@ def make_app(debug=get_bool_env(ENV_DEV)):
         "template_path": get_base_frontend_path(),
     }
     rel = settings.relative_url
+    if not rel.endswith("/"):
+        rel += "/"
     app = tornado.web.Application(
         [
             (f"{rel}", MainRequestHandler),
@@ -1228,6 +1298,9 @@ def make_app(debug=get_bool_env(ENV_DEV)):
             (f"{rel}prometheus-sd", PrometheusServiceDiscoveryHandler),
             (f"{rel}boards/([a-z0-9]+)", BoardsRequestHandler),
             (f"{rel}version", EsphomeVersionHandler),
+            (f"{rel}device/.*", MainRequestHandler),
+            (f"{rel}secrets", MainRequestHandler),
+            (f"{rel}devices/(.*)", DeviceHandler),
         ],
         **app_settings,
     )

@@ -1202,19 +1202,20 @@ def get_static_path(*args):
 def get_static_file_url(name):
     base = f"/static/{name}"
 
-    if ENV_DEV in os.environ:
-        return base
+    # if ENV_DEV in os.environ:
+    #     return base
 
-    # Module imports can't deduplicate if stuff added to url
-    if name == "js/esphome/index.js":
-        import esphome_dashboard
+    # # Module imports can't deduplicate if stuff added to url
+    # if name == "js/esphome/index.js":
+    #     import esphome_dashboard
 
-        return base.replace("index.js", esphome_dashboard.entrypoint())
+    #     return base.replace("index.js", esphome_dashboard.entrypoint())
 
-    path = get_static_path(name)
-    with open(path, "rb") as f_handle:
-        hash_ = hashlib.md5(f_handle.read()).hexdigest()[:8]
-    return f"{base}?hash={hash_}"
+    # path = get_static_path(name)
+    # with open(path, "rb") as f_handle:
+    #     hash_ = hashlib.md5(f_handle.read()).hexdigest()[:8]
+    # return f"{base}?hash={hash_}"
+    return base
 
 
 def get_ingress_path(request_handler):

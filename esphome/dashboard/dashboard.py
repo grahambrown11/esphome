@@ -1181,14 +1181,15 @@ class JsonConfigRequestHandler(BaseHandler):
 
 
 def get_base_frontend_path():
-    if ENV_DEV not in os.environ:
-        import esphome_dashboard
+    # if ENV_DEV not in os.environ:
+    #     import esphome_dashboard
 
-        return esphome_dashboard.where()
+    #     return esphome_dashboard.where()
 
-    static_path = os.environ[ENV_DEV]
-    if not static_path.endswith("/"):
-        static_path += "/"
+    # static_path = os.environ[ENV_DEV]
+    # if not static_path.endswith("/"):
+    #     static_path += "/"
+    static_path = "html/"
 
     # This path can be relative, so resolve against the root or else templates don't work
     return os.path.abspath(os.path.join(os.getcwd(), static_path, "esphome_dashboard"))

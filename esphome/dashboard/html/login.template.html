@@ -113,7 +113,7 @@
   <div class="card">
     <h3 id="login-head" class="center">Login</h3>
     <p class="center">Enter your {% if ha_addon %}Home Assistant{% else %}ESPHome{% end %} credentials.</p>
-    <form action="{{ base_url }}/login" method="post" id="login-form">
+    <form action="{{ base_path }}/login" method="post" id="login-form">
       {% if has_username or ha_addon %}
       <div class="row">
         <i class="material-icons prefix">person</i>

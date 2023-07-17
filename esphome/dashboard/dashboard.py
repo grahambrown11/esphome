@@ -1227,10 +1227,7 @@ def get_ingress_path(request_handler):
     rel_path = settings.relative_url
     header = request_handler.request.headers.get("X-Ingress-Path", "")
     if len(str(header)) > 0:
-        rel_path = str(header)
-        if not rel_path.endswith("/"):
-            rel_path += "/"
-        rel_path += settings.relative_url
+        rel_path = f"{str(header)}{settings.relative_url}"
     if rel_path.endswith("/"):
         rel_path = rel_path[:-1]
     return rel_path

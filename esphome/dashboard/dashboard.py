@@ -1221,7 +1221,10 @@ def get_ingress_path(request_handler):
     rel_path = settings.relative_url
     header = request_handler.request.headers.get("X-Ingress-Path", "")
     if len(str(header)) > 0:
-        rel_path = f"{rel_path}{str(header)}"
+        rel_path = str(header)
+        if not rel_path.endswith("/"):
+            rel_path += "/"
+        rel_path += settings.relative_url
     if rel_path.endswith("/"):
         rel_path = rel_path[:-1]
     return rel_path
@@ -1310,7 +1313,9 @@ def make_app(debug=get_bool_env(ENV_DEV)):
 
     # if relative path configured add a redirection
     if rel != "/":
-        app.add_handlers(r".*", [(r"/", tornado.web.RedirectHandler, {"url": rel})])
+        app.add_handlers(
+            r".*", [(r"/(.*)", tornado.web.RedirectHandler, {"url": f"{0}{rel}"})]
+        )
 
     return app
 

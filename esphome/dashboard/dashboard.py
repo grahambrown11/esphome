@@ -1179,6 +1179,12 @@ class JsonConfigRequestHandler(BaseHandler):
         self.finish()
 
 
+class RedirectHandler(BaseHandler):
+    def get(self):
+        path = get_ingress_path(self)
+        self.redirect(url=path, permanent=True)
+
+
 def get_base_frontend_path():
     # if ENV_DEV not in os.environ:
     #     import esphome_dashboard
@@ -1313,9 +1319,7 @@ def make_app(debug=get_bool_env(ENV_DEV)):
 
     # if relative path configured add a redirection
     if rel != "/":
-        app.add_handlers(
-            r".*", [(r"/(.*)", tornado.web.RedirectHandler, {"url": f"{0}{rel}"})]
-        )
+        app.add_handlers(r".*", [(r"/", RedirectHandler)])
 
     return app
 

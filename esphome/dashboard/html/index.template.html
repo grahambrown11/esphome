@@ -6,11 +6,10 @@
 
 {% block main %}
 <esphome-main basePath="{{ base_path }}" logo="{{ base_path }}{{ get_static_file_url('images/logo-text.svg') }}"
-  version="{{ version }}" docsLink="{{ docs_link }}" {% if login_enabled %}logoutUrl="{{ base_path }}logout" {% end
-  %}></esphome-main>
+  version="{{ version }}" docsLink="{{ docs_link }}" {% if login_enabled %}logoutUrl="/logout" {% end %}></esphome-main>
 {% end %}
 
 {% block footer %}
-<script src="{{ base_path }}{{ get_static_file_url('js/esphome/index-f953f643.js') }}" type="module"></script>
+<script src="{{ base_path }}{{ get_static_file_url('js/esphome/index-1c494b3e.js') }}" type="module"></script>
 {% end %}
 <!-- prettier-ignore -->

@@ -1182,7 +1182,7 @@ class JsonConfigRequestHandler(BaseHandler):
 class RedirectHandler(BaseHandler):
     def get(self):
         path = get_ingress_path(self)
-        self.redirect(url=path, permanent=True)
+        self.redirect(url=f"{path}/", permanent=True)
 
 
 def get_base_frontend_path():

@@ -4,7 +4,6 @@ import codecs
 import collections
 import functools
 import gzip
-import hashlib
 import hmac
 import json
 import logging
@@ -72,7 +71,7 @@ class DashboardSettings:
 
     @property
     def relative_url(self):
-        return os.getenv("ESPHOME_DASHBOARD_RELATIVE_URL", "")
+        return os.getenv("ESPHOME_DASHBOARD_RELATIVE_URL", "/")
 
     @property
     def status_use_ping(self):
@@ -1219,10 +1218,13 @@ def get_static_file_url(name):
 
 
 def get_ingress_path(request_handler):
+    rel_path = settings.relative_url
     header = request_handler.request.headers.get("X-Ingress-Path", "")
     if len(str(header)) > 0:
-        return str(header)
-    return ""
+        rel_path = f"{rel_path}{str(header)}"
+    if rel_path.endswith("/"):
+        rel_path = rel_path[:-1]
+    return rel_path
 
 
 def make_app(debug=get_bool_env(ENV_DEV)):

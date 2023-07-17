@@ -1308,7 +1308,7 @@ def make_app(debug=get_bool_env(ENV_DEV)):
 
     # if relative path configured add a redirection
     if rel != "/":
-        app.add_handlers((f"/", tornado.web.RedirectHandler, {"url": rel}))
+        app.add_handlers(r".*", [(r"/", tornado.web.RedirectHandler, {"url": rel})])
 
     return app
 

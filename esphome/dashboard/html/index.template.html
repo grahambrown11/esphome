@@ -5,9 +5,14 @@
 {% end %}
 
 {% block main %}
-<esphome-main basePath="{{ base_path }}" logo="{{ base_path }}{{ get_static_file_url('images/logo-text.svg') }}"
-  version="{{ version }}" docsLink="{{ docs_link }}" {% if streamer_mode %}streamerMode="true" {% end %} {% if
-  login_enabled %}logoutUrl="/logout" {% end %}></esphome-main>
+<esphome-main
+  basePath="{{ base_path }}"
+  logo="{{ base_path }}{{ get_static_file_url('images/logo-text.svg') }}"
+  version="{{ version }}"
+  docsLink="{{ docs_link }}"
+  {% if streamer_mode %}streamerMode="true"{% end %}
+  {% if login_enabled %}logoutUrl="/logout"{% end %}
+></esphome-main>
 {% end %}
 
 {% block footer %}

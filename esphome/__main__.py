@@ -363,10 +363,10 @@ def command_wizard(args):
 
 
 def command_config(args, config):
-    _LOGGER.info("Configuration is valid!")
     if not CORE.verbose:
         config = strip_default_ids(config)
     safe_print(yaml_util.dump(config, args.show_secrets))
+    _LOGGER.info("Configuration is valid!")
     return 0
 
 

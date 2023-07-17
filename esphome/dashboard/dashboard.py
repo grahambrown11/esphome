@@ -71,7 +71,12 @@ class DashboardSettings:
 
     @property
     def relative_url(self):
-        return os.getenv("ESPHOME_DASHBOARD_RELATIVE_URL", "/")
+        url = os.getenv("ESPHOME_DASHBOARD_RELATIVE_URL", "/")
+        if not url.startswith("/"):
+            url = f"/{url}"
+        if not url.endswith("/"):
+            url = f"{url}/"
+        return url
 
     @property
     def status_use_ping(self):
@@ -86,6 +91,10 @@ class DashboardSettings:
         if not self.on_ha_addon:
             return False
         return not get_bool_env("DISABLE_HA_AUTHENTICATION")
+
+    @property
+    def streamer_mode(self):
+        return get_bool_env("ESPHOME_STREAMER_MODE")
 
     @property
     def using_auth(self):
@@ -128,10 +137,9 @@ def template_args(request_handler):
         "version": version,
         "docs_link": docs_link,
         "get_static_file_url": get_static_file_url,
-        "relative_url": settings.relative_url,
-        "streamer_mode": get_bool_env("ESPHOME_STREAMER_MODE"),
+        "streamer_mode": settings.streamer_mode,
         "config_dir": settings.config_dir,
-        "base_path": get_ingress_path(request_handler),
+        "base_path": get_base_path(request_handler),
     }
 
 
@@ -139,7 +147,7 @@ def authenticated(func):
     @functools.wraps(func)
     def decorator(self, *args, **kwargs):
         if not is_authenticated(self):
-            self.redirect("./login")
+            self.redirect(f"{get_base_path(self)}/login")
             return None
         return func(self, *args, **kwargs)
 
@@ -257,6 +265,8 @@ class EsphomeCommandWebSocket(tornado.websocket.WebSocketHandler):
                 break
             data = codecs.decode(data, "utf8", "replace")
 
+            # TODO if settings.streamer_mode: redact sensitive info like password, key, MAC, SSID, BSSID, Serial Number
+
             _LOGGER.debug("> stdout: %s", data)
             self.write_message({"event": "line", "data": data})
 
@@ -354,7 +364,10 @@ class EsphomeCompileHandler(EsphomeCommandWebSocket):
 class EsphomeValidateHandler(EsphomeCommandWebSocket):
     def build_command(self, json_message):
         config_file = settings.rel_path(json_message["configuration"])
-        return ["esphome", "--dashboard", "config", config_file]
+        command = ["esphome", "--dashboard", "config", config_file]
+        if not settings.streamer_mode:
+            command.append("--show-secrets")
+        return command
 
 
 class EsphomeCleanMqttHandler(EsphomeCommandWebSocket):
@@ -1054,7 +1067,7 @@ MQTT_PING_REQUEST = threading.Event()
 class LoginHandler(BaseHandler):
     def get(self):
         if is_authenticated(self):
-            self.redirect("./")
+            self.redirect(f"{get_base_path(self)}/")
         else:
             self.render_login_page()
 
@@ -1084,7 +1097,7 @@ class LoginHandler(BaseHandler):
             )
             if req.status_code == 200:
                 self.set_secure_cookie("authenticated", cookie_authenticated_yes)
-                self.redirect("/")
+                self.redirect(f"{get_base_path(self)}/")
                 return
         except Exception as err:  # pylint: disable=broad-except
             _LOGGER.warning("Error during Hass.io auth request: %s", err)
@@ -1099,7 +1112,7 @@ class LoginHandler(BaseHandler):
         password = self.get_argument("password", "")
         if settings.check_password(username, password):
             self.set_secure_cookie("authenticated", cookie_authenticated_yes)
-            self.redirect("./")
+            self.redirect(f"{get_base_path(self)}/")
             return
         error_str = (
             "Invalid username or password" if settings.username else "Invalid password"
@@ -1118,7 +1131,7 @@ class LogoutHandler(BaseHandler):
     @authenticated
     def get(self):
         self.clear_cookie("authenticated")
-        self.redirect("./login")
+        self.redirect(f"{get_base_path(self)}/login")
 
 
 class SecretKeysRequestHandler(BaseHandler):
@@ -1165,7 +1178,9 @@ class JsonConfigRequestHandler(BaseHandler):
             self.send_error(404)
             return
 
-        args = ["esphome", "config", settings.rel_path(configuration), "--show-secrets"]
+        args = ["esphome", "config", settings.rel_path(configuration)]
+        if not settings.streamer_mode:
+            args.append("--show-secrets")
 
         rc, stdout, _ = run_system_command(*args)
 
@@ -1181,8 +1196,7 @@ class JsonConfigRequestHandler(BaseHandler):
 
 class RedirectHandler(BaseHandler):
     def get(self):
-        path = get_ingress_path(self)
-        self.redirect(url=f"{path}/", permanent=True)
+        self.redirect(url=f"{get_base_path(self)}/", permanent=True)
 
 
 def get_base_frontend_path():
@@ -1223,7 +1237,7 @@ def get_static_file_url(name):
     return base
 
 
-def get_ingress_path(request_handler):
+def get_base_path(request_handler):
     rel_path = settings.relative_url
     header = request_handler.request.headers.get("X-Ingress-Path", "")
     if len(str(header)) > 0:
@@ -1273,8 +1287,6 @@ def make_app(debug=get_bool_env(ENV_DEV)):
         "template_path": get_base_frontend_path(),
     }
     rel = settings.relative_url
-    if not rel.endswith("/"):
-        rel += "/"
     app = tornado.web.Application(
         [
             (f"{rel}", MainRequestHandler),
@@ -1314,7 +1326,7 @@ def make_app(debug=get_bool_env(ENV_DEV)):
         **app_settings,
     )
 
-    # if relative path configured add a redirection
+    # if relative path configured add a redirection to the new path
     if rel != "/":
         app.add_handlers(r".*", [(r"/", RedirectHandler)])
 

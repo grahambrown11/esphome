@@ -265,8 +265,6 @@ class EsphomeCommandWebSocket(tornado.websocket.WebSocketHandler):
                 break
             data = codecs.decode(data, "utf8", "replace")
 
-            # TODO if settings.streamer_mode: redact sensitive info like password, key, MAC, SSID, BSSID, Serial Number
-
             _LOGGER.debug("> stdout: %s", data)
             self.write_message({"event": "line", "data": data})
 
@@ -1210,7 +1208,7 @@ def get_base_frontend_path():
     #     static_path += "/"
 
     # This path can be relative, so resolve against the root or else templates don't work
-    return os.path.abspath("/esphome/esphome/dashboard/html")
+    return os.path.abspath("/workspaces/esphome/esphome/dashboard/html")
 
 
 def get_static_path(*args):

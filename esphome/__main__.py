@@ -365,7 +365,9 @@ def command_wizard(args):
 def command_config(args, config):
     if not CORE.verbose:
         config = strip_default_ids(config)
-    safe_print(yaml_util.dump(config, args.show_secrets))
+    output = yaml_util.dump(config, args.show_secrets)
+    output = re.sub(r"(key|password|ssid)\:\s(.*)", r"\1: \\033[5m\2\\033[6m", output)
+    safe_print(output)
     _LOGGER.info("Configuration is valid!")
     return 0
 

@@ -1176,9 +1176,7 @@ class JsonConfigRequestHandler(BaseHandler):
             self.send_error(404)
             return
 
-        args = ["esphome", "config", settings.rel_path(configuration)]
-        if not settings.streamer_mode:
-            args.append("--show-secrets")
+        args = ["esphome", "config", filename, "--show-secrets"]
 
         rc, stdout, _ = run_system_command(*args)
 
@@ -1208,7 +1206,7 @@ def get_base_frontend_path():
     #     static_path += "/"
 
     # This path can be relative, so resolve against the root or else templates don't work
-    return os.path.abspath("/esphome/esphome/dashboard/html")  # /workspaces
+    return os.path.abspath("/esphome/esphome/dashboard/html")
 
 
 def get_static_path(*args):
